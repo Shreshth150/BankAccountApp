@@ -2,6 +2,8 @@ package com.bankapp.Operation;
 
 import com.bankapp.DAO.Customer;
 import com.bankapp.DBManager.DbConnection;
+import com.bankapp.Exceptions.WithdrawMoneyException;
+
 import java.sql.*;
 
 public class AccountManager {
@@ -73,26 +75,31 @@ public class AccountManager {
 	public static void withdrawal(int id,int amount) throws ClassNotFoundException, SQLException {
 		try {
 			Statement stmt = connection.createStatement();
-			ResultSet rset = stmt.executeQuery("SELECT balance FROM Customer" + " where Cid= "+id+"");
-			int amt=0;
+			ResultSet rset = stmt.executeQuery("SELECT balance FROM Customer" + " where Cid= " + id + "");
+			int amt = 0;
 			while (rset.next())
-			    amt=rset.getInt(1);
-			if(amt<amount) {
-				System.out.println("You Don't have sufficient balance");
-			}else {
-					amt-=amount;
+				amt = rset.getInt(1);
+			try {
+				if (amt < amount) {
+					throw new WithdrawMoneyException();
+				} else {
+					amt -= amount;
 					@SuppressWarnings("unused")
-					ResultSet rs = stmt.executeQuery("UPDATE Customer " + "SET balance="+amt+" where Cid="+id+"");
-					ResultSet rsett = stmt.executeQuery("SELECT Cname ,balance FROM Customer" + " where Cid= "+id+"");
+					ResultSet rs = stmt.executeQuery("UPDATE Customer " + "SET balance=" + amt + " where Cid=" + id + "");
+					ResultSet rsett = stmt.executeQuery("SELECT Cname ,balance FROM Customer" + " where Cid= " + id + "");
 
-				Customer customer = new Customer();
-				customer.setCustomerId(id);
-				while(rsett.next()) {
-					customer.setCustomerName(rsett.getString("Cname"));
-					customer.setBalance(rsett.getInt("balance"));
+					Customer customer = new Customer();
+					customer.setCustomerId(id);
+					while (rsett.next()) {
+						customer.setCustomerName(rsett.getString("Cname"));
+						customer.setBalance(rsett.getInt("balance"));
+					}
+					System.out.println("Customer name : " + customer.getCustomerName() + " With Customer id : " + id + " withdrawal amount Rs." + amount + " has a current balance : Rs." + customer.getBalance());
 				}
-					System.out.println("Customer name : " +customer.getCustomerName()+ " With Customer id : "+ id + " withdrawal amount Rs."+amount+" has a current balance : Rs."+ customer.getBalance());
-				}
+			}
+			catch (WithdrawMoneyException e){
+				e.getMessage();
+		}
 			} catch(Exception e) {
 				e.printStackTrace();
 		}
